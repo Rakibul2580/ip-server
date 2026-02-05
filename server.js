@@ -11,24 +11,32 @@ app.get("/", (req, res) => {
   res.send("IP Info Proxy Server is running");
 });
 
-app.get("/api/ip-info", async (req, res) => {
-  const ip =
-    req.query.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+app.get("/api/iplocate", async (req, res) => {
+  const ip = req.query.ip || ""; // empty = use caller's IP
+  const apiKey = "610798c45d0f33437c2395508bcbdc85"; // ← YOUR REAL KEY HERE (keep secret!)
+
+  let url = `https://api.iplocate.io/api/lookup?apikey=${apiKey}`;
+  if (ip) {
+    url = `https://api.iplocate.io/api/lookup/${ip}?apikey=${apiKey}`;
+  }
 
   try {
-    const response = await fetch(
-      `https://api.findip.net/${ip}/?token=f1ebe4d52dab40fa90c4af7a32bf585e`,
-    );
-
+    const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errText = await response.text();
+      console.error(`IPLocate error: ${response.status} - ${errText}`);
+      return res
+        .status(response.status)
+        .json({ error: `API error: ${response.status}`, details: errText });
     }
 
     const data = await response.json();
     res.json(data);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to fetch IP data" });
+    console.error("Proxy error:", err);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch from IPLocate", details: err.message });
   }
 });
 
