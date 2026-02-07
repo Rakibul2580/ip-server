@@ -20,6 +20,8 @@ app.get("/api/iplocate", async (req, res) => {
     url = `https://api.iplocate.io/api/lookup/${ip}?apikey=${apiKey}`;
   }
 
+  console.log(url);
+
   try {
     const response = await fetch(url);
     if (!response.ok) {
